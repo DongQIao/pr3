@@ -193,9 +193,9 @@ int main()
   }
   for(i=0;i<3;i++){
   printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
-  ptr=mem_alloc(16,M_BESTFIT);
+  ptr=mem_alloc(32,M_BESTFIT);
   printf("%p\n",ptr);
-  ptr1=mem_alloc(16,M_BESTFIT);
+  ptr1=mem_alloc(64,M_BESTFIT);
   printf("%p\n",ptr1);
   printf("%d\n",n_head->size);
   ptr=mem_alloc(16,M_BESTFIT);
