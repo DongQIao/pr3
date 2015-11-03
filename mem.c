@@ -136,16 +136,33 @@ void* mem_alloc(int size,int style)
 int mem_free(void* ptr)
 {
   HEAD *pt;
-  NODE *rt,*qt;
+  NODE *rt,*qt,*lt;
   int n_size;
+  if(ptr==NULL)return -1;
   pt=ptr-sizeof(HEAD);
   rt=n_head;
   while(rt!=NULL){
-     if((void*)rt==pt->last){}
+     if((void*)rt==pt->last){
+       n_size=pt->size+sizeof(HEAD);
+       qt=(NODE*)pt;
+       qt->size=n_size+rt->size;
+       qt->next=rt->next;
+       if(rt==n_head){ n_head=qt; return 0; }
+       else{
+         lt=n_head;
+         while(lt->next!=rt){ lt=lt->next; }
+         lt->next=qt;
+       }
+     }
+     rt=rt->next;
      }
   rt=n_head;
   while(rt!=NULL){
-     if((void*)rt+rt->size==(void*)pt){}
+     if((void*)rt+rt->size==(void*)pt){
+       rt->size=rt->size+pt->size+sizeof(HEAD);
+       return 0;
+     }
+     rt=rt->next;
      }
    rt=n_head;
    n_size=pt->size;
@@ -154,10 +171,20 @@ int mem_free(void* ptr)
       qt->size=n_size+sizeof(HEAD);
       qt->next=rt->next;
       rt->next=qt; 
+      return 0;
+}
+void dump()
+{
+ NODE* pt;
+ pt=n_head;
+ while(pt!=NULL){
+ printf("%p\t%d\n",pt,pt->size);
+ pt=pt->next;
+ }
 }
 int main()
 {
-  void* ptr;
+  void* ptr,*ptr1;
   int d=sizeof(HEAD);
   int i;
   if(mem_init(10000)==-1){
@@ -166,13 +193,16 @@ int main()
   }
   for(i=0;i<3;i++){
   printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
-  ptr=mem_alloc(10000,M_WORSTFIT);
+  ptr=mem_alloc(16,M_BESTFIT);
   printf("%p\n",ptr);
-  ptr=mem_alloc(9984,M_BESTFIT);
-  printf("%p\n",ptr);
+  ptr1=mem_alloc(16,M_BESTFIT);
+  printf("%p\n",ptr1);
   printf("%d\n",n_head->size);
-  ptr=mem_alloc(8,M_FIRSTFIT);
+  ptr=mem_alloc(16,M_BESTFIT);
   printf("%p\n",ptr);
+  mem_free(ptr1);
   }
+  printf("\n\n\n");
+  dump();
   return 0;
 }
