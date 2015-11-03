@@ -166,7 +166,7 @@ int main()
   }
   for(i=0;i<3;i++){
   printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
-  ptr=mem_alloc(10000,M_WORSTFIT);
+  ptr=mem_alloc(16,M_WORSTFIT);
   printf("%p\n",ptr);
   ptr=mem_alloc(9984,M_BESTFIT);
   printf("%p\n",ptr);
