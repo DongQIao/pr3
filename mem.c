@@ -202,7 +202,7 @@ int main()
   printf("%p\n",ptr);
   mem_free(ptr1);
   }
-  printf("\n\n\n");
+  printf("\n\n");
   dump();
   return 0;
 }
