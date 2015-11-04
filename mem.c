@@ -33,6 +33,39 @@ int mem_init(int size_of_region)
     //printf("%p\n",n_head);
     return 0;
 }
+/**void* ops(NODE* rt,int size)
+{
+    NODE* pt,*qt;
+    HEAD* head;
+    int n_size;
+    void* ptr;
+    if(rt==n_head){
+         pt=n_head->next;
+         n_size=n_head->size;
+         head=(HEAD*)n_head;
+         n_head=(NODE*)((char*)n_head+sizeof(HEAD)+size);
+         n_head->size=n_size-(size+sizeof(HEAD));
+         n_head->next=pt;
+         head->size=size;
+         ptr=(void*)head+sizeof(HEAD);
+         head->last=ptr+size;
+         //printf("%p\n%p\n",head,n_head);
+         return ptr;
+         }
+        pt=n_head;
+    while(pt->next!=rt){pt=pt->next;}
+        head=(HEAD*)rt;
+        n_size=rt->size;
+        qt=rt->next;
+        rt=(NODE*)((char*)rt+sizeof(HEAD)+size);
+        rt->size=n_size-(size+sizeof(HEAD));
+        rt->next=qt;
+        pt->next=rt;
+        head->size=size;
+        ptr=(void*)((char*)head+sizeof(HEAD));
+        head->last=ptr+size;
+        return ptr;
+}**/
 void* m_play(NODE* rt,int size)
 {
     NODE *pt,*qt;
@@ -46,7 +79,7 @@ void* m_play(NODE* rt,int size)
         }
         else{
             t_size=n_head->size-n_size;
-            n_head+=n_size;
+            n_head=(NODE*)((void*)n_head+n_size);
             n_head->size=t_size;
             n_head->next=rt->next;
         }
@@ -111,6 +144,7 @@ void* mem_alloc(int size,int style)
             if(pt->size>rt->size){
                 rt=pt;
             }
+            pt=pt->next;
         }
         if(rt->size-n_size>=sizeof(NODE)||rt->size==n_size){
             flag=1;
@@ -152,6 +186,7 @@ int mem_free(void* ptr)
         return-1;
     }
     ht=(HEAD*)(ptr-sizeof(HEAD));
+    ptr=NULL;
     pt=(NODE*)ht;
     n_size=ht->size+sizeof(HEAD);
     pt->size=n_size;
@@ -195,6 +230,7 @@ int mem_free(void* ptr)
         if(qt==n_head){
             n_head=qt->next;
             rt->size+=qt->size;
+
             return 0;
         }
         pt->next=qt->next;
@@ -202,36 +238,36 @@ int mem_free(void* ptr)
     }
     return 0;
 }
-
 void dump()
 {
     NODE*pt;
     pt=n_head;
     while(pt!=NULL){
-        printf("%p\t%d\n",pt,pt->size);
+        printf("%p\t%p\n",pt,(void*)pt+pt->size);
         pt=pt->next;
     }
 }
 int main()
 {
-    void* ptr,*ptr1;
+    void* ptr1,*ptr2,*ptr3;
     int i;
     if(mem_init(10000)==-1){
             perror("mem_init");
             exit(1);
             }
     for(i=0;i<3;i++){
-            printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
-            ptr=mem_alloc(32,M_BESTFIT);
-            printf("%p\n",ptr);
-            ptr1=mem_alloc(64,M_BESTFIT);
+            printf("NO\t%d\n",i);
+            ptr1=mem_alloc(32,M_WORSTFIT);
             printf("%p\n",ptr1);
-            printf("%d\n",n_head->size);
-            ptr=mem_alloc(16,M_BESTFIT);
-            printf("%p\n",ptr);
+            ptr2=mem_alloc(64,M_FIRSTFIT);
+            printf("%p\n",ptr2);
+            ptr3=mem_alloc(16,M_BESTFIT);
+            printf("%p\n",ptr3);
+            dump();
             mem_free(ptr1);
+            mem_free(ptr3);
+            mem_free(ptr2);
+            dump();
             }
-    printf("\n\n");
-    dump();
     return 0;
 }
