@@ -33,39 +33,6 @@ int mem_init(int size_of_region)
     //printf("%p\n",n_head);
     return 0;
 }
-/**void* ops(NODE* rt,int size)
-{
-    NODE* pt,*qt;
-    HEAD* head;
-    int n_size;
-    void* ptr;
-    if(rt==n_head){
-         pt=n_head->next;
-         n_size=n_head->size;
-         head=(HEAD*)n_head;
-         n_head=(NODE*)((char*)n_head+sizeof(HEAD)+size);
-         n_head->size=n_size-(size+sizeof(HEAD));
-         n_head->next=pt;
-         head->size=size;
-         ptr=(void*)head+sizeof(HEAD);
-         head->last=ptr+size;
-         //printf("%p\n%p\n",head,n_head);
-         return ptr;
-         }
-        pt=n_head;
-    while(pt->next!=rt){pt=pt->next;}
-        head=(HEAD*)rt;
-        n_size=rt->size;
-        qt=rt->next;
-        rt=(NODE*)((char*)rt+sizeof(HEAD)+size);
-        rt->size=n_size-(size+sizeof(HEAD));
-        rt->next=qt;
-        pt->next=rt;
-        head->size=size;
-        ptr=(void*)((char*)head+sizeof(HEAD));
-        head->last=ptr+size;
-        return ptr;
-}**/
 void* m_play(NODE* rt,int size)
 {
     NODE *pt,*qt;
@@ -174,49 +141,6 @@ void* mem_alloc(int size,int style)
     return NULL;
 }
 
-//*
-int mem_free(void* ptr)
-{
-  HEAD *pt;
-  NODE *rt,*qt,*lt;
-  int n_size;
-  if(ptr==NULL)return -1;
-  pt=ptr-sizeof(HEAD);
-  rt=n_head;
-  while(rt!=NULL){
-     if((void*)rt==pt->last){
-       n_size=pt->size+sizeof(HEAD);
-       qt=(NODE*)pt;
-       qt->size=n_size+rt->size;
-       qt->next=rt->next;
-       if(rt==n_head){ n_head=qt; return 0; }
-       else{
-         lt=n_head;
-         while(lt->next!=rt){ lt=lt->next; }
-         lt->next=qt;
-       }
-     }
-     rt=rt->next;
-     }
-  rt=n_head;
-  while(rt!=NULL){
-     if((void*)rt+rt->size==(void*)pt){
-       rt->size=rt->size+pt->size+sizeof(HEAD);
-       return 0;
-     }
-     rt=rt->next;
-     }
-   rt=n_head;
-   n_size=pt->size;
-   qt=(NODE*)pt;
-   while((rt<qt)&&((rt->next)>qt)){rt=rt->next;}
-      qt->size=n_size+sizeof(HEAD);
-      qt->next=rt->next;
-      rt->next=qt;
-      return 0;
-}
-//*/
-/*
 int mem_free(void* ptr)
 {
     HEAD *ht;
@@ -278,7 +202,7 @@ int mem_free(void* ptr)
     }
     return 0;
 }
-*/
+
 void dump()
 {
     NODE*pt;
