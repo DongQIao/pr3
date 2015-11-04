@@ -6,34 +6,34 @@
 #include<unistd.h>
 
 typedef struct  head_t{
-     int size;
-     void* last;
-     }HEAD;
+    int size;
+    void* last;
+    }HEAD;
 
 typedef struct node_t{
-     int size;
-     struct node_t* next;
-     }NODE;
+    int size;
+    struct node_t* next;
+    }NODE;
+
 NODE* n_head;
 int m_error;
+
 int mem_init(int size_of_region)
 {
-    int fd=open("/dev/zero", O_RDWR);
-    void *ptr=mmap(NULL, size_of_region, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-    if (ptr == MAP_FAILED) { 
-      perror("mmap"); 
-      return -1; 
-      }
-      close(fd);
-      n_head=ptr;
-      n_head->size=size_of_region;
-      n_head->next=NULL;
-      //printf("%d\n",n_head->size);
-      printf("%p\n",ptr);
+    int fd=open("/dev/zero",O_RDWR);
+    void *ptr=mmap(NULL,size_of_region,PROT_READ|PROT_WRITE,MAP_PRIVATE,fd,0);
+    if(ptr==NULL){
+        perror("mmap");
+        return -1;
+    }
+    close(fd);
+    n_head=ptr;
+    n_head->size=size_of_region;
+    n_head->next=NULL;
+    //printf("%p\n",n_head);
     return 0;
 }
-
-void* ops(NODE* rt,int size)
+/**void* ops(NODE* rt,int size)
 {
     NODE* pt,*qt;
     HEAD* head;
@@ -65,74 +65,116 @@ void* ops(NODE* rt,int size)
         ptr=(void*)((char*)head+sizeof(HEAD));
         head->last=ptr+size;
         return ptr;
-}
-void* mem_alloc(int size,int style)
+}**/
+void* m_play(NODE* rt,int size)
 {
-   NODE *pt,*qt,*rt;
-   HEAD* head;
-   void* ptr;
-   int t_size,sub;
-   if(size%8!=0){size=(size/8)*8+8;}
-   if(style==M_BESTFIT){//style = best
-      pt=n_head;
-      rt=NULL;
-      t_size=size+sizeof(HEAD);
-      sub=9999999;
-      while(pt!=NULL){
-        if(((pt->size)-t_size>=(int)sizeof(NODE))&&((pt->size)-t_size<sub)){
-          //printf("%d\t%d\t%d\n",sub,t_size,pt->size);
-          sub=(pt->size)-t_size;
-          rt=pt;
+    NODE *pt,*qt;
+    HEAD *ht;
+    void* ptr;
+    int n_size,t_size;
+    n_size=size+sizeof(HEAD);
+    if(rt==n_head){
+        if(n_head->size==n_size){
+            n_head=n_head->next;
         }
-        pt=pt->next;
-      }
-      if(rt==NULL){
-        m_error=E_NO_SPACE;
-        return NULL;
-       }
-       ptr=ops(rt,size);
-       return ptr;
-      }
-   if(style==M_WORSTFIT){  //style = worst
-   pt=n_head;
-   t_size=0;
-   rt=NULL;
-   while(pt!=NULL){
-       if((pt->size)>t_size){
-          t_size=pt->size;
-          rt=pt;
-          }
-          pt=pt->next;
-          }
-       if(t_size<size+sizeof(HEAD)+sizeof(NODE)){
-        m_error=E_NO_SPACE;
-        return NULL;
-       }
-        ptr=ops(rt,size);
-        return ptr;
-   }
-   if(style==M_FIRSTFIT){// style =first
-   pt=n_head;
-   rt=NULL;
-   t_size=size+sizeof(HEAD);
-   while(pt!=NULL){
-     if((pt->size)-sizeof(NODE)>=t_size){
-          rt=pt;
-          break;
-          }
-      pt=pt->next;
-   }
-   if(rt==NULL){
-        m_error=E_NO_SPACE;
-        return NULL;
-       }
-       ptr=ops(rt,size);
-       return ptr;
-   }
-   m_error=99;                                        //no this style
-   return NULL;
+        else{
+            t_size=n_head->size-n_size;
+            n_head+=n_size;
+            n_head->size=t_size;
+            n_head->next=rt->next;
+        }
+    }
+    else{
+        pt=n_head;
+        while(pt->next!=rt){
+            pt=pt->next;
+        }
+        if(rt->size==n_size){
+            pt->next=rt->next;
+        }
+        else{
+            qt=(NODE*)((void*)rt+n_size);
+            qt->size=rt->size-n_size;
+            qt->next=rt->next;
+            pt->next=qt->next;
+        }
+    }
+    ht=(HEAD*)rt;
+    ht->size=size;
+    ptr=(void*)ht+sizeof(HEAD);
+    ht->last=ptr+size;
+    return ptr;
 }
 
+void* mem_alloc(int size,int style)
+{
+    NODE *pt,*rt;
+    void* ptr;
+    int n_size;
+    int flag=0;
+    if(n_head==NULL){
+        m_error=E_NO_SPACE;
+        return NULL;
+    }
+    if(size%8!=0){
+        size=(size/8+1)*8;
+    }
+    n_size=size+sizeof(HEAD);
+    pt=n_head;
+    rt=pt;
+    if(style==M_BESTFIT){
+        while(pt!=NULL){
+            if((pt->size-n_size)>=sizeof(NODE)||pt->size==n_size){
+                    flag=1;
+                    if(pt->size<rt->size){
+                        rt=pt;
+                    }
+            }
+            pt=pt->next;
+        }
+        if(flag==0){
+            m_error=E_NO_SPACE;
+            return NULL;
+        }
+        ptr=m_play(rt,size);
+        return ptr;
+    }
+    if(style==M_WORSTFIT){
+        while(pt!=NULL){
+            if(pt->size>rt->size){
+                rt=pt;
+            }
+        }
+        if(rt->size-n_size>=sizeof(NODE)||rt->size==n_size){
+            flag=1;
+        }
+        if(flag==0){
+            m_error=E_NO_SPACE;
+            return NULL;
+        }
+        ptr=m_play(rt,size);
+        return ptr;
+    }
+    if(style==M_FIRSTFIT){
+            while(pt!=NULL){
+                if(pt->size-n_size>=sizeof(NODE)||pt->size==n_size){
+                    rt=pt;
+                    flag=1;
+                    break;
+                }
+            }
+            if(flag==0){
+                m_error=E_NO_SPACE;
+                return NULL;
+            }
+            ptr=m_play(rt,size);
+            return ptr;
+    }
+    m_error=E_BAD_ARGS;
+    return NULL;
+}
+
+//*
 int mem_free(void* ptr)
 {
   HEAD *pt;
@@ -170,39 +212,102 @@ int mem_free(void* ptr)
    while((rt<qt)&&((rt->next)>qt)){rt=rt->next;}
       qt->size=n_size+sizeof(HEAD);
       qt->next=rt->next;
-      rt->next=qt; 
+      rt->next=qt;
       return 0;
 }
+//*/
+/*
+int mem_free(void* ptr)
+{
+    HEAD *ht;
+    NODE *pt,*qt,*rt;
+    int n_size;
+    int flag=0;
+    if(ptr==NULL){
+        m_error=E_BAD_POINTER;
+        return-1;
+    }
+    ht=(HEAD*)(ptr-sizeof(HEAD));
+    pt=(NODE*)ht;
+    n_size=ht->size+sizeof(HEAD);
+    pt->size=n_size;
+    pt->next=NULL;
+    qt=n_head;
+    if(n_head==NULL){
+        n_head=pt;
+        return 0;
+    }
+    while(qt->next!=NULL){
+        qt=qt->next;
+    }
+    qt->next=pt;
+    rt=n_head;
+    while(rt!=NULL){
+        if((void*)rt+rt->size==(void*)pt){
+            flag=1;
+            break;
+        }
+        rt=rt->next;
+    }
+    if(flag==1){
+        rt->size+=pt->size;
+        qt->next=pt->next;
+        flag=0;
+    }
+    else{
+        rt=pt;
+    }
+    qt=n_head;
+    pt=qt;
+    while(qt!=NULL){
+        if((void*)rt+rt->size==(void*)qt){
+            flag=1;
+            break;
+        }
+        pt=qt;
+        qt=pt->next;
+    }
+    if(flag==1){
+        if(qt==n_head){
+            n_head=qt->next;
+            rt->size+=qt->size;
+            return 0;
+        }
+        pt->next=qt->next;
+        rt->size+=qt->size;
+    }
+    return 0;
+}
+*/
 void dump()
 {
- NODE* pt;
- pt=n_head;
- while(pt!=NULL){
- printf("%p\t%d\n",pt,pt->size);
- pt=pt->next;
- }
+    NODE*pt;
+    pt=n_head;
+    while(pt!=NULL){
+        printf("%p\t%d\n",pt,pt->size);
+        pt=pt->next;
+    }
 }
 int main()
 {
-  void* ptr,*ptr1;
-  int d=sizeof(HEAD);
-  int i;
-  if(mem_init(10000)==-1){
-  perror("mem_init");
-  exit(1);
-  }
-  for(i=0;i<3;i++){
-  printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
-  ptr=mem_alloc(32,M_BESTFIT);
-  printf("%p\n",ptr);
-  ptr1=mem_alloc(64,M_BESTFIT);
-  printf("%p\n",ptr1);
-  printf("%d\n",n_head->size);
-  ptr=mem_alloc(16,M_BESTFIT);
-  printf("%p\n",ptr);
-  mem_free(ptr1);
-  }
-  printf("\n\n");
-  dump();
-  return 0;
+    void* ptr,*ptr1;
+    int i;
+    if(mem_init(10000)==-1){
+            perror("mem_init");
+            exit(1);
+            }
+    for(i=0;i<3;i++){
+            printf("%d\t%d\n",(int)sizeof(HEAD),(int)sizeof(NODE));
+            ptr=mem_alloc(32,M_BESTFIT);
+            printf("%p\n",ptr);
+            ptr1=mem_alloc(64,M_BESTFIT);
+            printf("%p\n",ptr1);
+            printf("%d\n",n_head->size);
+            ptr=mem_alloc(16,M_BESTFIT);
+            printf("%p\n",ptr);
+            mem_free(ptr1);
+            }
+    printf("\n\n");
+    dump();
+    return 0;
 }
