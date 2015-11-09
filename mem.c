@@ -7,7 +7,7 @@
 
 typedef struct  head_t{
     int size;
-    void* last;
+    int magic;
     }HEAD;
 
 typedef struct node_t{
@@ -33,39 +33,6 @@ int mem_init(int size_of_region)
     //printf("%p\n",n_head);
     return 0;
 }
-/**void* ops(NODE* rt,int size)
-{
-    NODE* pt,*qt;
-    HEAD* head;
-    int n_size;
-    void* ptr;
-    if(rt==n_head){
-         pt=n_head->next;
-         n_size=n_head->size;
-         head=(HEAD*)n_head;
-         n_head=(NODE*)((char*)n_head+sizeof(HEAD)+size);
-         n_head->size=n_size-(size+sizeof(HEAD));
-         n_head->next=pt;
-         head->size=size;
-         ptr=(void*)head+sizeof(HEAD);
-         head->last=ptr+size;
-         //printf("%p\n%p\n",head,n_head);
-         return ptr;
-         }
-        pt=n_head;
-    while(pt->next!=rt){pt=pt->next;}
-        head=(HEAD*)rt;
-        n_size=rt->size;
-        qt=rt->next;
-        rt=(NODE*)((char*)rt+sizeof(HEAD)+size);
-        rt->size=n_size-(size+sizeof(HEAD));
-        rt->next=qt;
-        pt->next=rt;
-        head->size=size;
-        ptr=(void*)((char*)head+sizeof(HEAD));
-        head->last=ptr+size;
-        return ptr;
-}**/
 void* m_play(NODE* rt,int size)
 {
     NODE *pt,*qt;
@@ -102,7 +69,7 @@ void* m_play(NODE* rt,int size)
     ht=(HEAD*)rt;
     ht->size=size;
     ptr=(void*)ht+sizeof(HEAD);
-    ht->last=ptr+size;
+    ht->magic=1234;
     return ptr;
 }
 
@@ -181,12 +148,12 @@ int mem_free(void* ptr)
     NODE *pt,*qt,*rt;
     int n_size;
     int flag=0;
-    if(ptr==NULL){
+    ht=(HEAD*)(ptr-sizeof(HEAD));
+    if(ht->magic!=1234){
         m_error=E_BAD_POINTER;
         return-1;
     }
-    ht=(HEAD*)(ptr-sizeof(HEAD));
-    ptr=NULL;
+    ht->magic=4321;
     pt=(NODE*)ht;
     n_size=ht->size+sizeof(HEAD);
     pt->size=n_size;
@@ -243,7 +210,7 @@ void dump()
     NODE*pt;
     pt=n_head;
     while(pt!=NULL){
-        printf("%p\t%p\n",pt,(void*)pt+pt->size);
+        printf("%p\t%d\n",pt,pt->size);
         pt=pt->next;
     }
 }
@@ -264,6 +231,7 @@ int main()
             ptr3=mem_alloc(16,M_BESTFIT);
             printf("%p\n",ptr3);
             dump();
+            mem_free(ptr1);
             mem_free(ptr1);
             mem_free(ptr3);
             mem_free(ptr2);
